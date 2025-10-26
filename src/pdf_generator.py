@@ -24,8 +24,9 @@ class PDFGenerator:
         if os.path.exists(css_path):
             stylesheets.append(CSS(filename=css_path))
         
-        # Generate PDF
-        html_doc = HTML(string=html_content)
+        # Generate PDF with base_url for images
+        base_url = f"file://{os.path.abspath('.')}/"
+        html_doc = HTML(string=html_content, base_url=base_url)
         html_doc.write_pdf(output_path, stylesheets=stylesheets)
         
         return output_path

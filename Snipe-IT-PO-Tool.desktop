@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Snipe-IT Purchase Order Tool
+Comment=Generate purchase orders from Snipe-IT assets
+Exec=/home/rob/Documents/github/snipe-po-tool/start_web_app.sh
+Icon=applications-office
+Terminal=true
+Categories=Office;
+StartupNotify=true
+Path=/home/rob/Documents/github/snipe-po-tool

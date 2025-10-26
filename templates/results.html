@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Purchase Orders Generated</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .btn { background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; }
+        .btn:hover { background: #0056b3; }
+        .file-list { background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .file-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>✅ Purchase Orders Generated!</h1>
+    
+    <div class="file-list">
+        <h3>📄 Generated Files:</h3>
+        {% for supplier, filename, total in files %}
+        <div class="file-item">
+            <strong>{{ supplier }}</strong> - ${{ "%.2f"|format(total) }}
+            <br>
+            <a href="/download/{{ filename }}" class="btn">📥 Download PDF</a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <a href="/" class="btn">🔄 Generate New Orders</a>
+</body>
+</html>

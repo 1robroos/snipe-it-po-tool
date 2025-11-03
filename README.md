@@ -10,8 +10,9 @@ Automatically generate professional PDF purchase orders from your Snipe-IT asset
 - 🏢 **Supplier-Specific POs** - Automatic supplier filtering and grouping
 - 🎨 **Company Branding** - Professional PDFs with company header
 - 📄 **Professional Layout** - Clean, printable purchase order documents
+- 🔢 **Sequential PO Numbers** - ICT0000001, ICT0000002, etc.
 - 🌐 **Web Interface** - Easy-to-use browser interface
-- ⚡ **Command Line** - Interactive and automated scripts
+- ⚡ **Command Line** - Interactive CLI option
 
 ## 🚀 Quick Start
 
@@ -42,11 +43,24 @@ python3 interactive_web_app.py
 python3 interactive_cli.py
 ```
 
-### Option 5: Automatic (All Assets per Supplier)
+## 🖥️ VM Deployment
+
+For production deployment on virtual machines:
+
 ```bash
-./install.sh
-python3 create_supplier_specific_po.py
+# Create deployment package
+./create_package.sh
+
+# Copy to VM
+scp /tmp/snipe-po-tool-YYYYMMDD.tar.gz user@vm-ip:~/
+
+# Deploy on VM
+tar -xzf snipe-po-tool-YYYYMMDD.tar.gz
+cd snipe-po-tool-YYYYMMDD
+./deploy.sh
 ```
+
+See `DEPLOYMENT.md` for detailed VM deployment instructions.
 
 ## ⚙️ Configuration
 
@@ -59,6 +73,7 @@ python3 create_supplier_specific_po.py
 ```bash
 SNIPE_URL=http://your-snipe-it-url
 SNIPE_TOKEN=your-api-token-here
+VERIFY_SSL=false  # Set to true for production with valid SSL
 ```
 
 3. **Add Company Header (Optional):**
@@ -66,7 +81,7 @@ SNIPE_TOKEN=your-api-token-here
    - Supported formats: JPG, PNG
    - Recommended size: Max height 120px
 
-## 📋 Usage Examples
+## 📋 Usage
 
 **Interactive Web Interface:**
 - Visit http://localhost:5001
@@ -86,30 +101,16 @@ python3 interactive_cli.py
 # 4. Generate PDF
 ```
 
-**Automated Scripts:**
-```bash
-# Generate all supplier POs automatically
-python3 create_supplier_specific_po.py
-
-# Test connection and view asset costs
-python3 test_integration.py
-
-# Debug purchase costs
-python3 debug_costs.py
-
-# Demo with sample data
-python3 demo.py
-```
-
 ## 📁 Output
 
 The tool generates:
-- `PO-YYYYMMDD-HHMMSS.pdf` format (clean, simple numbering)
+- Sequential PO numbers: `ICT0000001`, `ICT0000002`, etc.
 - Professional PDF layout with company header
 - Itemized asset lists with real purchase costs from Snipe-IT
 - Automatic handling of comma-formatted prices (e.g., "1,701.00")
 - Supplier-specific grouping
 - Total amounts per purchase order
+- Signature fields for approval
 
 ## 🎯 Key Features
 
@@ -117,8 +118,8 @@ The tool generates:
 - **Asset Selection**: Choose specific assets per PO
 - **Supplier Filtering**: Only see assets from selected supplier
 - **Company Branding**: Automatic header image inclusion
+- **Sequential Numbering**: ICT0000001, ICT0000002, etc.
 - **Error Handling**: Graceful handling of missing suppliers/costs
-- **Clean PO Numbers**: Simple PO-YYYYMMDD-HHMMSS format
 - **Real-time Totals**: See total amount as you build PO
 - **Instant PDF**: Download immediately after creation
 
@@ -127,8 +128,17 @@ The tool generates:
 - Python 3.7+
 - Snipe-IT with API access
 - Internet connection to Snipe-IT instance
-- Dependencies: flask, python-dotenv, requests, reportlab, weasyprint
+- Dependencies: flask, python-dotenv, requests, reportlab
 
 ## 📞 Support
 
 For issues or questions, contact your system administrator.
+
+## 🚀 Production Deployment
+
+The tool includes complete VM deployment automation:
+- Systemd service configuration
+- Automatic startup on boot
+- SSL verification handling
+- Professional PDF generation with reportlab
+- Sequential PO numbering system

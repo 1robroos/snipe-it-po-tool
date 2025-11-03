@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 sys.path.append('src')
 from snipe_api import SnipeAPI
 from pdf_generator import PDFGenerator
+from po_counter import get_next_po_number
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
@@ -37,7 +38,8 @@ def index():
     load_dotenv()
     
     try:
-        api = SnipeAPI(os.getenv('SNIPE_URL'), os.getenv('SNIPE_TOKEN'))
+        api = SnipeAPI(os.getenv('SNIPE_URL'), os.getenv('SNIPE_TOKEN'), 
+                      os.getenv('VERIFY_SSL', 'true').lower() == 'true')
         assets = api.get_assets()
         suppliers = api.get_suppliers()
         
@@ -90,7 +92,8 @@ def create_po():
     load_dotenv()
     
     try:
-        api = SnipeAPI(os.getenv('SNIPE_URL'), os.getenv('SNIPE_TOKEN'))
+        api = SnipeAPI(os.getenv('SNIPE_URL'), os.getenv('SNIPE_TOKEN'), 
+                      os.getenv('VERIFY_SSL', 'true').lower() == 'true')
         
         # Get supplier info
         supplier = api.get_supplier(int(supplier_id))
@@ -131,8 +134,8 @@ def create_po():
             flash('No valid assets selected', 'error')
             return redirect(url_for('index'))
         
-        # Create PO
-        po_number = f"PO-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        # Create PO with sequential number
+        po_number = get_next_po_number("ICT", 7)
         
         po_data = {
             'po_number': po_number,

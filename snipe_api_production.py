@@ -1,14 +1,12 @@
 import requests
 import os
 from typing import Dict, List, Optional
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class SnipeAPI:
     def __init__(self, base_url: str, api_token: str, verify_ssl: bool = True):
         self.base_url = base_url.rstrip('/')
         self.api_token = api_token
-        self.verify_ssl = False  # Force disable SSL verification
+        self.verify_ssl = verify_ssl
         self.headers = {
             'Authorization': f'Bearer {api_token}',
             'Accept': 'application/json',
@@ -20,7 +18,7 @@ class SnipeAPI:
         url = f"{self.base_url}/api/v1/hardware"
         params = {'limit': limit, 'offset': offset}
         
-        response = requests.get(url, headers=self.headers, params=params, verify=False)
+        response = requests.get(url, headers=self.headers, params=params, verify=self.verify_ssl)
         response.raise_for_status()
         return response.json()
     
@@ -28,7 +26,7 @@ class SnipeAPI:
         """Get single asset by ID"""
         url = f"{self.base_url}/api/v1/hardware/{asset_id}"
         
-        response = requests.get(url, headers=self.headers, verify=False)
+        response = requests.get(url, headers=self.headers, verify=self.verify_ssl)
         response.raise_for_status()
         return response.json()
     
@@ -36,7 +34,7 @@ class SnipeAPI:
         """Get all suppliers"""
         url = f"{self.base_url}/api/v1/suppliers"
         
-        response = requests.get(url, headers=self.headers, verify=False)
+        response = requests.get(url, headers=self.headers, verify=self.verify_ssl)
         response.raise_for_status()
         return response.json()
     
@@ -44,6 +42,6 @@ class SnipeAPI:
         """Get single supplier by ID"""
         url = f"{self.base_url}/api/v1/suppliers/{supplier_id}"
         
-        response = requests.get(url, headers=self.headers, verify=False)
+        response = requests.get(url, headers=self.headers, verify=self.verify_ssl)
         response.raise_for_status()
         return response.json()

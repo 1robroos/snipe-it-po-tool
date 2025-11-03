@@ -1,4 +1,4 @@
-import weasyprint
+from weasyprint import HTML, CSS
 from jinja2 import Environment, FileSystemLoader
 import os
 from typing import Dict, List
@@ -22,11 +22,11 @@ class PDFGenerator:
         css_path = os.path.join(self.static_dir, 'purchase_order.css')
         stylesheets = []
         if os.path.exists(css_path):
-            stylesheets.append(weasyprint.CSS(filename=css_path))
+            stylesheets.append(CSS(filename=css_path))
         
-        # Generate PDF with base_url for images - use explicit weasyprint.HTML
+        # Generate PDF with base_url for images
         base_url = f"file://{os.path.abspath('.')}/"
-        html_doc = weasyprint.HTML(string=html_content, base_url=base_url)
+        html_doc = HTML(string=html_content, base_url=base_url)
         html_doc.write_pdf(output_path, stylesheets=stylesheets)
         
         return output_path

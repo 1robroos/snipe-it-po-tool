@@ -61,14 +61,13 @@ class PDFGenerator:
         
         # PO Details and Supplier Info
         details_data = [
-            ['PO Number:', po_data.get('po_number', 'N/A'), 'Status:', po_data.get('status', 'draft').upper()],
-            ['Created:', po_data.get('created_at', po_data.get('date', 'N/A')), 'Supplier:', po_data.get('supplier_name', 'N/A')]
+            ['PO Number:', po_data.get('po_number', 'N/A')],
+            ['Supplier:', po_data.get('supplier_name', 'N/A')]
         ]
         
-        details_table = Table(details_data, colWidths=[1.2*inch, 2.3*inch, 1.2*inch, 2.3*inch])
+        details_table = Table(details_data, colWidths=[1.5*inch, 5.5*inch])
         details_table.setStyle(TableStyle([
             ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
-            ('FONTNAME', (2,0), (2,-1), 'Helvetica-Bold'),
             ('FONTSIZE', (0,0), (-1,-1), 12),
             ('BOTTOMPADDING', (0,0), (-1,-1), 8),
             ('ALIGN', (0,0), (-1,-1), 'LEFT'),
@@ -83,38 +82,34 @@ class PDFGenerator:
         story.append(items_title)
         
         # Items table
-        items_data = [['#', 'Asset Name', 'Qty', 'Unit Price', 'Total Price', 'Notes']]
+        items_data = [['#', 'Asset Tag', 'Asset Name', 'Unit Price (€)', 'Notes']]
         
         total_amount = 0
         for idx, item in enumerate(po_data.get('items', []), 1):
-            # Handle both tuple and dict formats
+            # Handle new tuple format: (0, 0, asset_tag, name, price)
             if isinstance(item, tuple):
-                asset_id = item[2] if len(item) > 2 else 'N/A'
+                asset_tag = item[2] if len(item) > 2 else 'N/A'
                 name = item[3] if len(item) > 3 else 'Unknown'
-                price = float(str(item[4]).replace(',', '').replace('$', '') or 0) if len(item) > 4 else 0
-                qty = item[5] if len(item) > 5 else 1
+                price = float(str(item[4]).replace(',', '').replace('€', '').replace('$', '') or 0) if len(item) > 4 else 0
             else:
-                asset_id = item.get('asset_tag', item.get('id', 'N/A'))
+                asset_tag = item.get('asset_tag', 'N/A')
                 name = item.get('name', 'Unknown')
-                price = float(str(item.get('purchase_cost', '0')).replace(',', '').replace('$', '') or 0)
-                qty = item.get('quantity', 1)
+                price = float(str(item.get('purchase_cost', '0')).replace(',', '').replace('€', '').replace('$', '') or 0)
             
-            total = qty * price
-            total_amount += total
+            total_amount += price
             
             items_data.append([
                 str(idx),
+                str(asset_tag),
                 str(name),
-                str(qty),
-                f"${price:.2f}",
-                f"${total:.2f}",
+                f"€{price:.2f}",
                 '-'
             ])
         
         # Add total row
-        items_data.append(['', '', '', 'TOTAL:', f"${total_amount:.2f}", ''])
+        items_data.append(['', '', 'TOTAL:', f"€{total_amount:.2f}", ''])
         
-        items_table = Table(items_data, colWidths=[0.4*inch, 2.5*inch, 0.6*inch, 1*inch, 1*inch, 1.5*inch])
+        items_table = Table(items_data, colWidths=[0.4*inch, 1.2*inch, 2.8*inch, 1.1*inch, 1.5*inch])
         items_table.setStyle(TableStyle([
             # Header row
             ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
@@ -127,14 +122,13 @@ class PDFGenerator:
             ('FONTNAME', (0,1), (-1,-2), 'Helvetica'),
             ('FONTSIZE', (0,1), (-1,-2), 11),
             ('ALIGN', (0,1), (0,-1), 'CENTER'),  # # column
-            ('ALIGN', (2,1), (2,-1), 'CENTER'),  # Qty column
-            ('ALIGN', (3,1), (-2,-1), 'RIGHT'),  # Price columns
+            ('ALIGN', (3,1), (3,-1), 'RIGHT'),   # Price column
             
             # Total row
             ('BACKGROUND', (0,-1), (-1,-1), colors.lightblue),
             ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
             ('FONTSIZE', (0,-1), (-1,-1), 12),
-            ('ALIGN', (3,-1), (4,-1), 'RIGHT'),
+            ('ALIGN', (2,-1), (3,-1), 'RIGHT'),
             
             # Grid
             ('GRID', (0,0), (-1,-1), 1, colors.black),
@@ -142,17 +136,27 @@ class PDFGenerator:
         ]))
         story.append(items_table)
         
-        # Footer
+        # Comments section
+        comments = po_data.get('comments', '').strip()
+        if comments:
+            story.append(Spacer(1, 20))
+            comments_title = Paragraph("<b>Comments/Order Instructions:</b>", 
+                                     ParagraphStyle('CommentsTitle', parent=styles['Normal'], 
+                                                  fontSize=12, spaceAfter=5))
+            story.append(comments_title)
+            
+            comments_text = Paragraph(comments, 
+                                    ParagraphStyle('Comments', parent=styles['Normal'], 
+                                                 fontSize=11, leftIndent=20))
+            story.append(comments_text)
+        
+        # Footer (empty now)
         story.append(Spacer(1, 30))
-        footer_text = f"This purchase order was generated on {po_data.get('created_at', po_data.get('date', 'N/A'))}."
-        footer = Paragraph(footer_text, ParagraphStyle('Footer', parent=styles['Normal'], 
-                                                      fontSize=10, textColor=colors.grey))
-        story.append(footer)
         
         # Signature section
         story.append(Spacer(1, 40))
         sig_data = [
-            ['Client', 'Management'],
+            ['Requested by', 'Management'],
             ['', ''],
             ['', ''],
             ['Signature & Date', 'Signature & Date']

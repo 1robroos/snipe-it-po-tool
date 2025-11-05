@@ -53,20 +53,27 @@ def index():
                 detailed_assets.append({
                     'id': asset['id'],
                     'name': asset.get('name', 'Unknown'),
+                    'asset_tag': asset_detail.get('asset_tag', 'N/A'),
                     'model': asset.get('model', {}).get('name', 'Unknown Model'),
                     'supplier_id': supplier_info.get('id') if supplier_info else None,
                     'supplier_name': supplier_info.get('name', 'No Supplier') if supplier_info else 'No Supplier',
-                    'purchase_cost': get_purchase_cost(asset_detail)
+                    'purchase_cost': get_purchase_cost(asset_detail),
+                    'created_at': asset_detail.get('created_at', {}).get('datetime', '1970-01-01T00:00:00Z')
                 })
             except:
                 detailed_assets.append({
                     'id': asset['id'],
                     'name': asset.get('name', 'Unknown'),
+                    'asset_tag': 'N/A',
                     'model': asset.get('model', {}).get('name', 'Unknown Model'),
                     'supplier_id': None,
                     'supplier_name': 'No Supplier',
-                    'purchase_cost': 0
+                    'purchase_cost': 0,
+                    'created_at': '1970-01-01T00:00:00Z'
                 })
+        
+        # Sort by creation date (newest first)
+        detailed_assets.sort(key=lambda x: x['created_at'], reverse=True)
         
         return render_template('interactive.html', 
                              assets=detailed_assets,
@@ -118,14 +125,13 @@ def create_po():
                         purchase_cost = purchase_cost.replace(',', '')
                     price = float(purchase_cost) if purchase_cost else 0
                 
-                quantity = int(request.form.get(f'quantity_{asset_id}', 1))
-                
                 po_items.append((
-                    0, 0, int(asset_id),
+                    0, 0, 
+                    asset.get('asset_tag', 'N/A'),  # Asset tag
                     f"{asset.get('name', 'Unknown')} - {asset.get('model', {}).get('name', 'Unknown Model')}",
-                    quantity, price
+                    price  # Price in euros
                 ))
-                total += price * quantity
+                total += price
             except Exception as e:
                 flash(f'Error processing asset {asset_id}: {e}', 'error')
                 continue
@@ -134,8 +140,11 @@ def create_po():
             flash('No valid assets selected', 'error')
             return redirect(url_for('index'))
         
+        # Get comments from form
+        comments = request.form.get('comments', '').strip()
+        
         # Create PO with sequential number
-        po_number = get_next_po_number("ICT", 7)
+        po_number = get_next_po_number()
         
         po_data = {
             'po_number': po_number,
@@ -143,7 +152,8 @@ def create_po():
             'created_at': datetime.now().strftime('%B %d, %Y'),
             'status': 'draft',
             'items': po_items,
-            'total_amount': total
+            'total_amount': total,
+            'comments': comments
         }
         
         # Generate PDF

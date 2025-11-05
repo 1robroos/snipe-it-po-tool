@@ -10,11 +10,14 @@ Automatically generate professional PDF purchase orders from your Snipe-IT asset
 - 🏢 **Supplier-Specific POs** - Automatic supplier filtering and grouping
 - 🎨 **Company Branding** - Professional PDFs with company header
 - 📄 **Professional Layout** - Clean, printable purchase order documents
-- 🔢 **Sequential PO Numbers** - ICT0000001, ICT0000002, etc.
+- 🔢 **Sequential PO Numbers** - ICT2025000001, ICT2025000002, etc. (yearly reset)
 - 🌐 **Web Interface** - Easy-to-use browser interface
 - ⚡ **Command Line** - Interactive CLI option
+- 📝 **Comments Field** - Add order instructions and requester info
+- 🏷️ **Asset Tags** - Display asset tags in first column, sorted newest first
+- 💶 **Euro Currency** - All prices displayed in euros
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Development/Local)
 
 ### Option 1: Desktop Icon (Easiest)
 ```bash
@@ -45,19 +48,56 @@ python3 interactive_cli.py
 
 ## 🖥️ VM Deployment
 
-For production deployment on virtual machines:
+### Test Environment Deployment
+For test/development environments (self-signed certificates):
 
 ```bash
 # Create deployment package
 ./create_package.sh
 
-# Copy to VM
-scp /tmp/snipe-po-tool-YYYYMMDD.tar.gz user@vm-ip:~/
+# Copy to test VM
+scp /tmp/snipe-po-tool-YYYYMMDD.tar.gz user@test-vm-ip:~/
 
-# Deploy on VM
+# Deploy on test VM
 tar -xzf snipe-po-tool-YYYYMMDD.tar.gz
 cd snipe-po-tool-YYYYMMDD
 ./deploy.sh
+
+# Configure for test environment
+sudo nano /opt/snipe-po-tool/.env
+```
+
+Test environment .env configuration:
+```bash
+SNIPE_URL=https://your-test-snipe-it-url
+SNIPE_TOKEN=your-api-token-here
+VERIFY_SSL=false  # Disabled for test environments
+```
+
+### Production Environment Deployment
+For production environments (valid SSL certificates):
+
+```bash
+# Create deployment package
+./create_package.sh
+
+# Copy to production VM
+scp /tmp/snipe-po-tool-YYYYMMDD.tar.gz user@prod-vm-ip:~/
+
+# Deploy on production VM
+tar -xzf snipe-po-tool-YYYYMMDD.tar.gz
+cd snipe-po-tool-YYYYMMDD
+./deploy.sh
+
+# Configure for production environment
+sudo nano /opt/snipe-po-tool/.env
+```
+
+Production environment .env configuration:
+```bash
+SNIPE_URL=https://your-production-snipe-it-url
+SNIPE_TOKEN=your-api-token-here
+VERIFY_SSL=true  # Enabled for production with valid certificates
 ```
 
 See `DEPLOYMENT.md` for detailed VM deployment instructions.
@@ -84,10 +124,10 @@ VERIFY_SSL=false  # Set to true for production with valid SSL
 ## 📋 Usage
 
 **Interactive Web Interface:**
-- Visit http://localhost:5001
+- Visit http://localhost:5001 (local) or http://vm-ip:5001 (VM)
 - Select supplier from dropdown
-- Choose assets by clicking on cards
-- Quantities are adjustable, prices come from Snipe-IT
+- Choose assets from table (sorted newest first, showing asset tags)
+- Add comments/order instructions
 - Click "Create Purchase Order"
 - Download PDF immediately
 
@@ -96,21 +136,21 @@ VERIFY_SSL=false  # Set to true for production with valid SSL
 python3 interactive_cli.py
 # Follow prompts to:
 # 1. Select supplier
-# 2. Choose assets (1,2,3 or 'all')
-# 3. Set quantities (prices from Snipe-IT)
+# 2. Choose assets
+# 3. Add comments
 # 4. Generate PDF
 ```
 
 ## 📁 Output
 
 The tool generates:
-- Sequential PO numbers: `ICT0000001`, `ICT0000002`, etc.
+- Sequential PO numbers: `ICT2025000001`, `ICT2025000002`, etc.
+- Yearly reset: `ICT2026000001` starts in 2026
 - Professional PDF layout with company header
-- Itemized asset lists with real purchase costs from Snipe-IT
-- Automatic handling of comma-formatted prices (e.g., "1,701.00")
-- Supplier-specific grouping
-- Total amounts per purchase order
-- Signature fields for approval
+- Asset table with tags, names, models, and euro prices
+- Comments/order instructions section
+- Signature fields for "Requested by" and "Management"
+- Clean layout without redundant information
 
 ## 🎯 Key Features
 
@@ -118,7 +158,11 @@ The tool generates:
 - **Asset Selection**: Choose specific assets per PO
 - **Supplier Filtering**: Only see assets from selected supplier
 - **Company Branding**: Automatic header image inclusion
-- **Sequential Numbering**: ICT0000001, ICT0000002, etc.
+- **Sequential Numbering**: ICT2025000001, ICT2025000002, etc. (yearly reset)
+- **Asset Tags**: First column shows asset tags
+- **Sorting**: Assets sorted by creation date (newest first)
+- **Comments**: Free text field for order instructions
+- **Euro Currency**: All prices in euros (€)
 - **Error Handling**: Graceful handling of missing suppliers/costs
 - **Real-time Totals**: See total amount as you build PO
 - **Instant PDF**: Download immediately after creation
@@ -134,11 +178,16 @@ The tool generates:
 
 For issues or questions, contact your system administrator.
 
-## 🚀 Production Deployment
+## 🚀 Production vs Test Deployment
 
-The tool includes complete VM deployment automation:
-- Systemd service configuration
-- Automatic startup on boot
-- SSL verification handling
-- Professional PDF generation with reportlab
-- Sequential PO numbering system
+**Test Environment:**
+- Self-signed or invalid SSL certificates
+- `VERIFY_SSL=false` in .env
+- Typically used for development/testing
+
+**Production Environment:**
+- Valid SSL certificates
+- `VERIFY_SSL=true` in .env
+- Used for live business operations
+
+The tool automatically handles SSL verification based on the VERIFY_SSL setting in your .env configuration.

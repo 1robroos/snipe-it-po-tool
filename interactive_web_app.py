@@ -43,34 +43,31 @@ def index():
         assets = api.get_assets()
         suppliers = api.get_suppliers()
         
-        # Get detailed asset info with suppliers
+        # Use bulk data directly without individual API calls
         detailed_assets = []
         for asset in assets['rows']:
-            try:
-                asset_detail = api.get_asset(asset['id'])
-                supplier_info = asset_detail.get('supplier', {})
-                
-                detailed_assets.append({
-                    'id': asset['id'],
-                    'name': asset.get('name', 'Unknown'),
-                    'asset_tag': asset_detail.get('asset_tag', 'N/A'),
-                    'model': asset.get('model', {}).get('name', 'Unknown Model'),
-                    'supplier_id': supplier_info.get('id') if supplier_info else None,
-                    'supplier_name': supplier_info.get('name', 'No Supplier') if supplier_info else 'No Supplier',
-                    'purchase_cost': get_purchase_cost(asset_detail),
-                    'created_at': asset_detail.get('created_at', {}).get('datetime', '1970-01-01T00:00:00Z')
-                })
-            except:
-                detailed_assets.append({
-                    'id': asset['id'],
-                    'name': asset.get('name', 'Unknown'),
-                    'asset_tag': 'N/A',
-                    'model': asset.get('model', {}).get('name', 'Unknown Model'),
-                    'supplier_id': None,
-                    'supplier_name': 'No Supplier',
-                    'purchase_cost': 0,
-                    'created_at': '1970-01-01T00:00:00Z'
-                })
+            supplier_info = asset.get('supplier', {})
+            
+            # Handle purchase_cost conversion
+            purchase_cost = asset.get('purchase_cost', 0)
+            if isinstance(purchase_cost, str):
+                try:
+                    purchase_cost = float(purchase_cost.replace(',', '.'))
+                except (ValueError, AttributeError):
+                    purchase_cost = 0
+            elif purchase_cost is None:
+                purchase_cost = 0
+            
+            detailed_assets.append({
+                'id': asset['id'],
+                'name': asset.get('name', 'Unknown'),
+                'asset_tag': asset.get('asset_tag', 'N/A'),
+                'model': asset.get('model', {}).get('name', 'Unknown Model'),
+                'supplier_id': supplier_info.get('id') if supplier_info else None,
+                'supplier_name': supplier_info.get('name', 'No Supplier') if supplier_info else 'No Supplier',
+                'purchase_cost': purchase_cost,
+                'created_at': asset.get('created_at', {}).get('datetime', '1970-01-01T00:00:00Z')
+            })
         
         # Sort by creation date (newest first)
         detailed_assets.sort(key=lambda x: x['created_at'], reverse=True)

@@ -7,8 +7,20 @@ The Snipe-IT Purchase Order Tool automatically generates professional PDF purcha
 ## 🚀 Getting Started
 
 ### Accessing the Tool
-- **Web Interface**: Open your browser and go to `http://your-server:5001`
-- **Command Line**: Run `python3 interactive_cli.py` (for advanced users)
+
+#### Desktop Launcher (Easiest)
+After installation, you'll find a desktop icon called **"Snipe-IT Purchase Order Tool"**:
+1. Double-click the desktop icon
+2. Your default browser opens automatically
+3. The tool loads at `http://localhost:5001`
+4. No need to remember URLs or commands
+
+#### Web Interface (Manual)
+- Open your browser and go to `http://your-server:5001`
+- Bookmark this URL for easy access
+
+#### Command Line (Advanced Users)
+- Run `python3 interactive_cli.py` for text-based interface
 
 ### First Time Setup
 Your system administrator will have configured:

@@ -131,9 +131,22 @@ WantedBy=multi-user.target
 │   └── pdf_generator.py      # PDF generation
 ├── templates/                 # HTML templates
 ├── static/                    # Static files (company header)
-└── data/                      # Data storage
-    └── po_counter.json       # PO counter persistence
+├── data/                      # Data storage
+│   └── po_counter.json       # PO counter persistence
+├── Snipe-IT-PO-Tool.desktop  # Desktop launcher (local only)
+├── install.sh                # Local installation script
+└── start_web_app.sh          # Local startup script
 ```
+
+## 🖥️ Local Development Features
+
+### Desktop Launcher
+For local development, the tool includes:
+- **Desktop Icon**: `Snipe-IT-PO-Tool.desktop`
+- **Auto-start Script**: `start_web_app.sh`
+- **Installation Script**: `install.sh`
+
+These are designed for local development and are not deployed to VMs.
 
 ## 🔐 Security Considerations
 

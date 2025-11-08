@@ -40,7 +40,7 @@ def index():
     try:
         api = SnipeAPI(os.getenv('SNIPE_URL'), os.getenv('SNIPE_TOKEN'), 
                       os.getenv('VERIFY_SSL', 'true').lower() == 'true')
-        assets = api.get_assets()
+        assets = api.get_assets(limit=500)
         suppliers = api.get_suppliers()
         
         # Use bulk data directly without individual API calls

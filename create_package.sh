@@ -22,9 +22,11 @@ tar -czf "$PACKAGE_NAME.tar.gz" $PACKAGE_NAME/
 echo "✅ Package created: /tmp/$PACKAGE_NAME.tar.gz"
 echo ""
 echo "📋 To deploy on VM:"
-echo "1. Copy package to VM: scp /tmp/$PACKAGE_NAME.tar.gz user@vm-ip:~/"
-echo "2. Extract: tar -xzf $PACKAGE_NAME.tar.gz"
-echo "3. Deploy: cd $PACKAGE_NAME && ./deploy.sh"
+echo "1. Extract: tar -xzf $PACKAGE_NAME.tar.gz"
+echo "2. Deploy: cd $PACKAGE_NAME && ./deploy.sh"
+echo "3. Copy .env: cp /home/admin-vanvliet/snipe-PO-tool_helpfiles/.env /opt/snipe-po-tool/"
+echo "4. For test server: echo 'VERIFY_SSL=false' >> /opt/snipe-po-tool/.env"
+echo "5. Restart: sudo systemctl restart snipe-po-tool"
 
 # Cleanup
 rm -rf $TEMP_DIR

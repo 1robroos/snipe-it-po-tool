@@ -13,22 +13,36 @@ This guide covers deployment of the Snipe-IT Purchase Order Tool on virtual mach
 
 ## 🚀 Quick Deployment
 
-### 1. Create Deployment Package
+### 1. Clone Repository on VM
 ```bash
-cd /path/to/snipe-po-tool
+cd /home/admin-vanvliet/github
+git clone https://github.com/your-repo/snipe-it-po-tool
+```
+
+### 2. Create Deployment Package on VM
+```bash
+cd /home/admin-vanvliet/github/snipe-it-po-tool
 ./create_package.sh
 ```
 
-### 2. Transfer to VM
+### 3. Deploy Package
 ```bash
-scp /tmp/snipe-po-tool-YYYYMMDD.tar.gz user@vm-ip:~/
-```
-
-### 3. Deploy on VM
-```bash
+cd /tmp
 tar -xzf snipe-po-tool-YYYYMMDD.tar.gz
 cd snipe-po-tool-YYYYMMDD
 ./deploy.sh
+```
+
+### 4. Configure Environment
+```bash
+# Copy existing .env file
+cp /home/admin-vanvliet/snipe-PO-tool_helpfiles/.env /opt/snipe-po-tool/
+
+# For test server, add SSL bypass
+echo "VERIFY_SSL=false" >> /opt/snipe-po-tool/.env
+
+# Restart service
+sudo systemctl restart snipe-po-tool
 ```
 
 ## 🧪 Test Environment Setup

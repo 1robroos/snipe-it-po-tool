@@ -7,6 +7,29 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 import os
 from typing import Dict
 
+def format_dutch_currency(amount):
+    """Format amount to Dutch currency notation: €1.234,56"""
+    print(f"DEBUG: Formatting {amount}")  # Debug line
+    if amount == 0:
+        return "€0,00"
+    
+    # Format with 2 decimals
+    formatted = f"{amount:.2f}"
+    
+    # Split into euros and cents
+    euros, cents = formatted.split('.')
+    
+    # Add thousand separators (dots) to euros part
+    if len(euros) > 3:
+        # Reverse, add dots every 3 digits, reverse back
+        euros_reversed = euros[::-1]
+        euros_with_dots = '.'.join([euros_reversed[i:i+3] for i in range(0, len(euros_reversed), 3)])
+        euros = euros_with_dots[::-1]
+    
+    result = f"€{euros},{cents}"
+    print(f"DEBUG: Result = {result}")  # Debug line
+    return result
+
 class PDFGenerator:
     def __init__(self, template_dir: str = 'templates', static_dir: str = 'static'):
         self.template_dir = template_dir
@@ -102,12 +125,12 @@ class PDFGenerator:
                 str(idx),
                 str(asset_tag),
                 str(name),
-                f"€{price:.2f}",
+                format_dutch_currency(price),
                 '-'
             ])
         
         # Add total row
-        items_data.append(['', '', 'TOTAL:', f"€{total_amount:.2f}", ''])
+        items_data.append(['', '', 'TOTAL:', format_dutch_currency(total_amount), ''])
         
         items_table = Table(items_data, colWidths=[0.4*inch, 1.2*inch, 2.8*inch, 1.1*inch, 1.5*inch])
         items_table.setStyle(TableStyle([

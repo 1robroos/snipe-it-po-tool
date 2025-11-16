@@ -18,19 +18,30 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
 
 def get_purchase_cost(asset_detail):
-    """Extract purchase cost from asset detail"""
-    purchase_cost = asset_detail.get('purchase_cost', {})
-    if isinstance(purchase_cost, dict):
-        amount = purchase_cost.get('amount', 0)
-        if isinstance(amount, str):
-            # Remove commas from price strings like "1,701.00"
-            amount = amount.replace(',', '')
-        return float(amount) if amount else 0
-    else:
-        if isinstance(purchase_cost, str):
-            # Remove commas from price strings
-            purchase_cost = purchase_cost.replace(',', '')
-        return float(purchase_cost) if purchase_cost else 0
+    """Extract purchase cost from asset detail - support multiple formats"""
+    purchase_cost_raw = asset_detail.get('purchase_cost', 0)
+    
+    if isinstance(purchase_cost_raw, dict):
+        # Format: {"amount": "150000", "currency": "EUR"}
+        amount = purchase_cost_raw.get('amount', 0)
+        if amount:
+            try:
+                return float(str(amount).replace(',', '')) / 100
+            except (ValueError, TypeError):
+                return 0
+    elif isinstance(purchase_cost_raw, (int, float)):
+        # Format: 150000 (already in cents)
+        return float(purchase_cost_raw) / 100
+    elif isinstance(purchase_cost_raw, str) and purchase_cost_raw:
+        # Format: "150000" or "1500.00"
+        try:
+            value = float(purchase_cost_raw.replace(',', ''))
+            # If value > 1000, assume it's in cents, otherwise euros
+            return value / 100 if value > 1000 else value
+        except (ValueError, TypeError):
+            return 0
+    
+    return 0
 
 @app.route('/')
 def index():
@@ -48,15 +59,18 @@ def index():
         for asset in assets['rows']:
             supplier_info = asset.get('supplier', {})
             
-            # Handle purchase_cost conversion
-            purchase_cost = asset.get('purchase_cost', 0)
-            if isinstance(purchase_cost, str):
+            # Handle purchase_cost conversion - parse Dutch notation
+            purchase_cost_raw = asset.get('purchase_cost')
+            purchase_cost = 0
+            
+            if purchase_cost_raw and str(purchase_cost_raw).strip():
                 try:
-                    purchase_cost = float(purchase_cost.replace(',', '.'))
-                except (ValueError, AttributeError):
+                    # Remove EUR/€, remove dots (thousand separators), replace comma with dot
+                    value_str = str(purchase_cost_raw).replace('EUR', '').replace('€', '').strip()
+                    value_str = value_str.replace('.', '').replace(',', '.')
+                    purchase_cost = float(value_str)
+                except (ValueError, TypeError):
                     purchase_cost = 0
-            elif purchase_cost is None:
-                purchase_cost = 0
             
             detailed_assets.append({
                 'id': asset['id'],
@@ -66,11 +80,12 @@ def index():
                 'supplier_id': supplier_info.get('id') if supplier_info else None,
                 'supplier_name': supplier_info.get('name', 'No Supplier') if supplier_info else 'No Supplier',
                 'purchase_cost': purchase_cost,
-                'created_at': asset.get('created_at', {}).get('datetime', '1970-01-01T00:00:00Z')
+                'created_at': asset.get('created_at', {}).get('datetime', '1970-01-01T00:00:00Z'),
+                'updated_at': asset.get('updated_at', {}).get('datetime', '1970-01-01T00:00:00Z')
             })
         
-        # Sort by creation date (newest first)
-        detailed_assets.sort(key=lambda x: x['created_at'], reverse=True)
+        # Sort by updated_at (newest first)
+        detailed_assets.sort(key=lambda x: x['updated_at'], reverse=True)
         
         return render_template('interactive.html', 
                              assets=detailed_assets,
@@ -110,17 +125,18 @@ def create_po():
         for asset_id in selected_assets:
             try:
                 asset = api.get_asset(int(asset_id))
-                # Use purchase_cost from Snipe-IT, fallback to 0 if not set
-                purchase_cost = asset.get('purchase_cost', {})
-                if isinstance(purchase_cost, dict):
-                    amount = purchase_cost.get('amount', 0)
-                    if isinstance(amount, str):
-                        amount = amount.replace(',', '')
-                    price = float(amount) if amount else 0
-                else:
-                    if isinstance(purchase_cost, str):
-                        purchase_cost = purchase_cost.replace(',', '')
-                    price = float(purchase_cost) if purchase_cost else 0
+                # Handle purchase_cost - parse Dutch notation
+                purchase_cost_raw = asset.get('purchase_cost')
+                price = 0
+                
+                if purchase_cost_raw and str(purchase_cost_raw).strip():
+                    try:
+                        # Remove EUR/€, remove dots (thousand separators), replace comma with dot
+                        value_str = str(purchase_cost_raw).replace('EUR', '').replace('€', '').strip()
+                        value_str = value_str.replace('.', '').replace(',', '.')
+                        price = float(value_str)
+                    except (ValueError, TypeError):
+                        price = 0
                 
                 po_items.append((
                     0, 0, 

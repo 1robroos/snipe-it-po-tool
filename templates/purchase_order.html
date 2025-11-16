@@ -190,7 +190,7 @@
                         <td>
                             <strong>{{ item[3] }}</strong>
                         </td>
-                        <td class="text-right">€{{ "%.2f"|format(item[4]|float) }}</td>
+                        <td class="text-right">{{ item[4]|float|dutch_currency }}</td>
                         <td>-</td>
                     </tr>
                 {% endfor %}
@@ -198,7 +198,7 @@
             <tfoot>
                 <tr class="total-row">
                     <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
-                    <td class="text-right"><strong>€{{ "%.2f"|format(total_amount) }}</strong></td>
+                    <td class="text-right"><strong>{{ total_amount|dutch_currency }}</strong></td>
                     <td></td>
                 </tr>
             </tfoot>

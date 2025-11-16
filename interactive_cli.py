@@ -108,17 +108,29 @@ def interactive_po_creation():
         for asset in selected_assets:
             print(f"\n📋 Asset: {asset['name']} - {asset['model']}")
             
-            # Get purchase cost from Snipe-IT
-            purchase_cost = asset['detail'].get('purchase_cost', {})
-            if isinstance(purchase_cost, dict):
-                amount = purchase_cost.get('amount', 0)
-                if isinstance(amount, str):
-                    amount = amount.replace(',', '')
-                price = float(amount) if amount else 0
-            else:
-                if isinstance(purchase_cost, str):
-                    purchase_cost = purchase_cost.replace(',', '')
-                price = float(purchase_cost) if purchase_cost else 0
+            # Handle purchase_cost - support multiple formats
+            purchase_cost_raw = asset['detail'].get('purchase_cost', 0)
+            price = 0
+            
+            if isinstance(purchase_cost_raw, dict):
+                # Format: {"amount": "150000", "currency": "EUR"}
+                amount = purchase_cost_raw.get('amount', 0)
+                if amount:
+                    try:
+                        price = float(str(amount).replace(',', '')) / 100
+                    except (ValueError, TypeError):
+                        price = 0
+            elif isinstance(purchase_cost_raw, (int, float)):
+                # Format: 150000 (already in cents)
+                price = float(purchase_cost_raw) / 100
+            elif isinstance(purchase_cost_raw, str) and purchase_cost_raw:
+                # Format: "150000" or "1500.00"
+                try:
+                    value = float(purchase_cost_raw.replace(',', ''))
+                    # If value > 1000, assume it's in cents, otherwise euros
+                    price = value / 100 if value > 1000 else value
+                except (ValueError, TypeError):
+                    price = 0
             
             print(f"  Purchase Cost: ${price:.2f}")
             

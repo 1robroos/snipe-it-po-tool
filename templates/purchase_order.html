@@ -10,7 +10,7 @@
             line-height: 1.4;
             color: #333;
             margin: 0;
-            padding: 20px 40px;
+            padding: 0;
         }
         
         .header {
@@ -126,7 +126,7 @@
         }
         
         @page {
-            margin: 20mm;
+            margin: 8mm;
         }
     </style>
 </head>
@@ -148,15 +148,6 @@
             </p>
         </div>
     </div>
-
-    <!-- Purchase Order Details -->
-    <div class="section-title">Purchase Order Details</div>
-    <table class="info-table">
-        <tr>
-            <td class="label">PO Number:</td>
-            <td>{{ po_number }}</td>
-        </tr>
-    </table>
 
     <!-- Supplier Information -->
     {% if supplier_name %}

@@ -5,7 +5,7 @@ Automatically generate professional PDF purchase orders from your Snipe-IT asset
 ## ✨ Features
 
 - 🔗 **Direct Snipe-IT Integration** - Connects to your Snipe-IT API
-- 🎯 **Custom Asset Selection** - Choose exactly which assets to include
+- 🎯 **Item Selection** - Choose assets, licenses, accessories, consumables or components
 - 💰 **Real Purchase Costs** - Uses actual purchase costs from Snipe-IT
 - 🏢 **Supplier-Specific POs** - Automatic supplier filtering and grouping
 - 🎨 **Company Branding** - Professional PDFs with company header
@@ -14,7 +14,7 @@ Automatically generate professional PDF purchase orders from your Snipe-IT asset
 - 🌐 **Web Interface** - Easy-to-use browser interface
 - ⚡ **Command Line** - Interactive CLI option
 - 📝 **Comments Field** - Add order instructions and requester info
-- 🏷️ **Asset Tags** - Display asset tags in first column, sorted newest first
+- 🏷️ **Asset Tags** - Display asset tags / order numbers in first column, sorted newest first
 - 💶 **Euro Currency** - All prices displayed in euros
 
 ## 🚀 Quick Start (Development/Local)
@@ -126,7 +126,7 @@ VERIFY_SSL=false  # Set to true for production with valid SSL
 **Interactive Web Interface:**
 - Visit http://localhost:5001 (local) or http://vm-ip:5001 (VM)
 - Select supplier from dropdown
-- Choose assets from table (sorted newest first, showing asset tags)
+- Choose items from tabbed table: Assets, Licenses, Accessories, Consumables, Components
 - Add comments/order instructions
 - Click "Create Purchase Order"
 - Download PDF immediately
@@ -155,11 +155,11 @@ The tool generates:
 ## 🎯 Key Features
 
 - **Real Pricing**: Uses purchase_cost field from Snipe-IT assets
-- **Asset Selection**: Choose specific assets per PO
-- **Supplier Filtering**: Only see assets from selected supplier
+- **Item Selection**: Choose assets, licenses, accessories, consumables or components per PO
+- **Supplier Filtering**: Only see items from selected supplier
 - **Company Branding**: Automatic header image inclusion
 - **Sequential Numbering**: ICT2025000001, ICT2025000002, etc. (yearly reset)
-- **Asset Tags**: First column shows asset tags
+- **Asset Tags**: First column shows asset tags or order numbers (licenses)
 - **Sorting**: Assets sorted by creation date (newest first)
 - **Comments**: Free text field for order instructions
 - **Euro Currency**: All prices in euros (€)

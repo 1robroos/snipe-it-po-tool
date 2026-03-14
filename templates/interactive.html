@@ -22,6 +22,11 @@
         .asset-checkbox { margin-right: 10px; }
         
         textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 0; }
+        .tab-btn { padding: 8px 16px; border: 1px solid #ddd; border-bottom: none; background: #f8f9fa; cursor: pointer; border-radius: 5px 5px 0 0; }
+        .tab-btn.active { background: #fff; font-weight: bold; border-bottom: 1px solid #fff; margin-bottom: -1px; z-index: 1; }
+        .tab-content { display: none; border: 1px solid #ddd; padding: 10px; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -52,33 +57,44 @@
             <textarea name="comments" rows="3" placeholder="Enter who requested this order or any special instructions..."></textarea>
         </div>
         
-        <h3>📦 Select Assets (sorted by newest first):</h3>
-        <table class="assets-table" id="assetsTable">
-            <thead>
-                <tr>
-                    <th width="5%">Select</th>
-                    <th width="15%">Asset Tag</th>
-                    <th width="35%">Asset Name</th>
-                    <th width="20%">Model</th>
-                    <th width="15%">Supplier</th>
-                    <th width="10%">Price (€)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for asset in assets %}
-                <tr data-supplier="{{ asset.supplier_id }}" onclick="toggleAssetRow(this, {{ asset.id }})">
-                    <td>
-                        <input type="checkbox" name="assets" value="{{ asset.id }}" class="asset-checkbox" onclick="event.stopPropagation();">
-                    </td>
-                    <td><strong>{{ asset.asset_tag }}</strong></td>
-                    <td>{{ asset.name }}</td>
-                    <td>{{ asset.model }}</td>
-                    <td>{{ asset.supplier_name }}</td>
-                    <td>€{{ "%.2f"|format(asset.purchase_cost) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h3>📦 Select Items (sorted by newest first):</h3>
+
+        <div class="tabs">
+            <button type="button" class="tab-btn active" onclick="showTab('assets')">Assets</button>
+            <button type="button" class="tab-btn" onclick="showTab('licenses')">Licenses</button>
+            <button type="button" class="tab-btn" onclick="showTab('accessories')">Accessories</button>
+            <button type="button" class="tab-btn" onclick="showTab('consumables')">Consumables</button>
+            <button type="button" class="tab-btn" onclick="showTab('components')">Components</button>
+        </div>
+
+        {% for category, cat_key, items in [('assets', 'asset', assets), ('licenses', 'license', licenses), ('accessories', 'accessory', accessories), ('consumables', 'consumable', consumables), ('components', 'component', components)] %}
+        <div id="tab-{{ category }}" class="tab-content {% if category == 'assets' %}active{% endif %}">
+            <table class="assets-table">
+                <thead>
+                    <tr>
+                        <th width="5%">Select</th>
+                        <th width="15%">Tag/ID</th>
+                        <th width="35%">Name</th>
+                        <th width="20%">Model</th>
+                        <th width="15%">Supplier</th>
+                        <th width="10%">Price (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr data-supplier="{{ item.supplier_id }}" onclick="toggleRow(this, '{{ cat_key }}_{{ item.id }}')">
+                        <td><input type="checkbox" name="assets" value="{{ cat_key }}_{{ item.id }}" class="asset-checkbox" onclick="event.stopPropagation();"></td>
+                        <td><strong>{{ item.asset_tag }}</strong></td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.model }}</td>
+                        <td>{{ item.supplier_name }}</td>
+                        <td>€{{ "%.2f"|format(item.purchase_cost) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
         
         <div style="margin: 20px 0;">
             <div class="total-display">Total: €<span id="totalAmount">0.00</span></div>
@@ -88,79 +104,52 @@
     </form>
     
     <script>
-        function toggleAssetRow(row, assetId) {
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleRow(row, itemId) {
             const checkbox = row.querySelector('input[type="checkbox"]');
             checkbox.checked = !checkbox.checked;
-            
-            if (checkbox.checked) {
-                row.classList.add('selected');
-            } else {
-                row.classList.remove('selected');
-            }
-            
+            row.classList.toggle('selected', checkbox.checked);
             updateCreateButton();
             updateTotal();
         }
-        
+
         function updateCreateButton() {
-            const selectedAssets = document.querySelectorAll('input[name="assets"]:checked');
+            const selected = document.querySelectorAll('input[name="assets"]:checked');
             const supplier = document.querySelector('select[name="supplier"]').value;
-            const createBtn = document.getElementById('createBtn');
-            
-            createBtn.disabled = selectedAssets.length === 0 || !supplier;
+            document.getElementById('createBtn').disabled = selected.length === 0 || !supplier;
         }
-        
+
         function updateTotal() {
             let total = 0;
-            const selectedAssets = document.querySelectorAll('input[name="assets"]:checked');
-            
-            selectedAssets.forEach(checkbox => {
-                const row = checkbox.closest('tr');
-                const priceText = row.cells[5].textContent.replace('€', '');
-                const price = parseFloat(priceText) || 0;
+            document.querySelectorAll('input[name="assets"]:checked').forEach(cb => {
+                const price = parseFloat(cb.closest('tr').cells[5].textContent.replace('€', '')) || 0;
                 total += price;
             });
-            
             document.getElementById('totalAmount').textContent = total.toFixed(2);
         }
-        
+
         function filterAssets() {
             const selectedSupplier = document.querySelector('select[name="supplier"]').value;
-            const assetRows = document.querySelectorAll('#assetsTable tbody tr');
-            
-            // Clear all selections
-            assetRows.forEach(row => {
-                const checkbox = row.querySelector('input[type="checkbox"]');
-                checkbox.checked = false;
+            document.querySelectorAll('.tab-content tbody tr').forEach(row => {
+                const cb = row.querySelector('input[type="checkbox"]');
+                cb.checked = false;
                 row.classList.remove('selected');
+                row.style.display = (!selectedSupplier || row.getAttribute('data-supplier') === selectedSupplier) ? '' : 'none';
             });
-            
-            // Show/hide assets based on supplier
-            assetRows.forEach(row => {
-                const assetSupplier = row.getAttribute('data-supplier');
-                if (!selectedSupplier || assetSupplier === selectedSupplier) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
             updateCreateButton();
             updateTotal();
         }
-        
-        // Initialize
-        document.querySelector('select[name="supplier"]').addEventListener('change', updateCreateButton);
-        
-        // Add click handlers for checkboxes
-        document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const row = this.closest('tr');
-                if (this.checked) {
-                    row.classList.add('selected');
-                } else {
-                    row.classList.remove('selected');
-                }
+
+        document.querySelector('select[name="supplier"]').addEventListener('change', filterAssets);
+        document.querySelectorAll('.asset-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                this.closest('tr').classList.toggle('selected', this.checked);
                 updateCreateButton();
                 updateTotal();
             });

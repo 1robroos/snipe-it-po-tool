@@ -53,7 +53,11 @@ def index():
                       os.getenv('VERIFY_SSL', 'true').lower() == 'true')
         assets = api.get_assets(limit=500)
         suppliers = api.get_suppliers()
-        
+        licenses = api.get_licenses()
+        accessories = api.get_accessories()
+        consumables = api.get_consumables()
+        components = api.get_components()
+
         # Use bulk data directly without individual API calls
         detailed_assets = []
         for asset in assets['rows']:
@@ -86,9 +90,45 @@ def index():
         
         # Sort by updated_at (newest first)
         detailed_assets.sort(key=lambda x: x['updated_at'], reverse=True)
-        
-        return render_template('interactive.html', 
+
+        def parse_cost(raw):
+            if not raw or not str(raw).strip():
+                return 0
+            try:
+                v = str(raw).replace('EUR', '').replace('€', '').strip()
+                v = v.replace('.', '').replace(',', '.')
+                return float(v)
+            except (ValueError, TypeError):
+                return 0
+
+        def map_items(rows, tag_key='asset_tag'):
+            result = []
+            for item in rows:
+                supplier_info = item.get('supplier', {})
+                result.append({
+                    'id': item['id'],
+                    'name': item.get('name', 'Unknown'),
+                    'asset_tag': item.get(tag_key) or item.get('asset_tag') or f"ID:{item['id']}",
+                    'model': item.get('model', {}).get('name', '') if isinstance(item.get('model'), dict) else '',
+                    'supplier_id': supplier_info.get('id') if supplier_info else None,
+                    'supplier_name': supplier_info.get('name', 'No Supplier') if supplier_info else 'No Supplier',
+                    'purchase_cost': parse_cost(item.get('purchase_cost')),
+                    'updated_at': item.get('updated_at', {}).get('datetime', '1970-01-01T00:00:00Z') if isinstance(item.get('updated_at'), dict) else '1970-01-01T00:00:00Z'
+                })
+            result.sort(key=lambda x: x['updated_at'], reverse=True)
+            return result
+
+        detailed_licenses = map_items(licenses.get('rows', []), tag_key='order_number')
+        detailed_accessories = map_items(accessories.get('rows', []))
+        detailed_consumables = map_items(consumables.get('rows', []))
+        detailed_components = map_items(components.get('rows', []))
+
+        return render_template('interactive.html',
                              assets=detailed_assets,
+                             licenses=detailed_licenses,
+                             accessories=detailed_accessories,
+                             consumables=detailed_consumables,
+                             components=detailed_components,
                              suppliers=suppliers['rows'])
     except Exception as e:
         flash(f'Error connecting to Snipe-IT: {e}', 'error')
@@ -117,40 +157,50 @@ def create_po():
         # Get supplier info
         supplier = api.get_supplier(int(supplier_id))
         supplier_name = supplier.get('name', 'Unknown Supplier')
-        
-        # Get selected assets details
+
+        # Fetch all item data in bulk for lookup
+        all_items = {}
+        for row in api.get_assets(limit=500).get('rows', []):
+            all_items[f"asset_{row['id']}"] = row
+        for row in api.get_licenses().get('rows', []):
+            all_items[f"license_{row['id']}"] = row
+        for row in api.get_accessories().get('rows', []):
+            all_items[f"accessory_{row['id']}"] = row
+        for row in api.get_consumables().get('rows', []):
+            all_items[f"consumable_{row['id']}"] = row
+        for row in api.get_components().get('rows', []):
+            all_items[f"component_{row['id']}"] = row
+
+        def parse_cost(raw):
+            if not raw or not str(raw).strip():
+                return 0
+            try:
+                v = str(raw).replace('EUR', '').replace('€', '').strip()
+                v = v.replace('.', '').replace(',', '.')
+                return float(v)
+            except (ValueError, TypeError):
+                return 0
+
+        # Get selected items details
         po_items = []
         total = 0
-        
-        for asset_id in selected_assets:
-            try:
-                asset = api.get_asset(int(asset_id))
-                # Handle purchase_cost - parse Dutch notation
-                purchase_cost_raw = asset.get('purchase_cost')
-                price = 0
-                
-                if purchase_cost_raw and str(purchase_cost_raw).strip():
-                    try:
-                        # Remove EUR/€, remove dots (thousand separators), replace comma with dot
-                        value_str = str(purchase_cost_raw).replace('EUR', '').replace('€', '').strip()
-                        value_str = value_str.replace('.', '').replace(',', '.')
-                        price = float(value_str)
-                    except (ValueError, TypeError):
-                        price = 0
-                
-                po_items.append((
-                    0, 0, 
-                    asset.get('asset_tag', 'N/A'),  # Asset tag
-                    f"{asset.get('name', 'Unknown')} - {asset.get('model', {}).get('name', 'Unknown Model')}",
-                    price  # Price in euros
-                ))
-                total += price
-            except Exception as e:
-                flash(f'Error processing asset {asset_id}: {e}', 'error')
+
+        for entry in selected_assets:
+            item = all_items.get(entry)
+            if not item:
                 continue
-        
+            price = parse_cost(item.get('purchase_cost'))
+            category = entry.split('_')[0]
+            tag = item.get('asset_tag') or item.get('order_number') or f"ID:{item['id']}"
+            model = item.get('model', {}).get('name', '') if isinstance(item.get('model'), dict) else ''
+            label = item.get('name', 'Unknown')
+            if model:
+                label = f"{label} - {model}"
+            po_items.append((0, 0, tag, label, price))
+            total += price
+
         if not po_items:
-            flash('No valid assets selected', 'error')
+            flash('No valid items selected', 'error')
             return redirect(url_for('index'))
         
         # Get comments from form

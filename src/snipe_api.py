@@ -47,3 +47,23 @@ class SnipeAPI:
         response = requests.get(url, headers=self.headers, verify=False)
         response.raise_for_status()
         return response.json()
+
+    def get_licenses(self, limit: int = 500) -> Dict:
+        response = requests.get(f"{self.base_url}/api/v1/licenses", headers=self.headers, params={'limit': limit}, verify=False)
+        response.raise_for_status()
+        return response.json()
+
+    def get_accessories(self, limit: int = 500) -> Dict:
+        response = requests.get(f"{self.base_url}/api/v1/accessories", headers=self.headers, params={'limit': limit}, verify=False)
+        response.raise_for_status()
+        return response.json()
+
+    def get_consumables(self, limit: int = 500) -> Dict:
+        response = requests.get(f"{self.base_url}/api/v1/consumables", headers=self.headers, params={'limit': limit}, verify=False)
+        response.raise_for_status()
+        return response.json()
+
+    def get_components(self, limit: int = 500) -> Dict:
+        response = requests.get(f"{self.base_url}/api/v1/components", headers=self.headers, params={'limit': limit}, verify=False)
+        response.raise_for_status()
+        return response.json()
